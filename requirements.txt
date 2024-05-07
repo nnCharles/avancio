@@ -1,0 +1,6 @@
+jupyter
+llama-index==0.10.34
+llama-index-embeddings-huggingface==0.2.0
+openai==1.25.1
+python-dotenv
+trulens-eval==0.28.2
