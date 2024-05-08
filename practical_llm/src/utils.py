@@ -91,7 +91,7 @@ def build_sentence_window_index(
     save_dir="sentence_index"
 ):
     node_parser = SentenceWindowNodeParser.from_defaults(
-        window_size=3,
+        window_size=1,
         window_metadata_key="window",
         original_text_metadata_key="original_text",
     )
@@ -158,8 +158,8 @@ def build_automerging_index(
 
 def get_automerging_query_engine(
     automerging_index,
-    similarity_top_k=12,
-    rerank_top_n=2,
+    similarity_top_k=10,
+    rerank_top_n=3,
 ):
     base_retriever = automerging_index.as_retriever(similarity_top_k=similarity_top_k)
     retriever = AutoMergingRetriever(

@@ -1,17 +1,20 @@
-# Practical LLM: Two easy methods to boost your RAG metrics
+# Boosting RAG Metrics: Two Practical Methods
 
-Retrieval-Augmented Generation (RAG) is a framework used to provide additional knowledge to LLMs in order to extend their context knowledge and enable them to return more adequate answers. In particular, companies this enables companies to feed their internal data to a LLM and get personalized responses.
-The RAG process can be divided into 3 phases:
-- indexing : the indexing of external data usually consists in chunking the text extracted from documents, computing their embedding and storing them in a special type of database known as `VectorStores`.
-- retrieval : during retrieval, the embedding of the query is computed and chunks that are the most relevant for it are retrieved in order to serve as context in the generation prompt 
-- generation : finally leveraging the context that was retrieved, the LLM will formulate its answer.
+Retrieval-Augmented Generation (RAG) is a powerful framework used to enhance the contextual understanding of Large Language Models (LLMs) by incorporating additional knowledge. By extending the context provided to LLMs, RAG enables them to generate more accurate and relevant responses, making it particularly valuable for companies seeking personalized interactions with their data.
 
+## Understanding the RAG Process
 
-## Naive RAG implementation in LLamax-index
+The RAG process can be broken down into three main phases:
+
+- Indexing: External data is indexed by chunking the text from documents, computing embeddings, and storing them in a specialized database known as `VectorStores`.
+- Retrieval: During retrieval, the embedding of a query is computed, and chunks that are most relevant to it are retrieved to serve as context for generating a response.
+- Generation: Leveraging the retrieved context, the LLM formulates its response.
+
+## Naive RAG implementation with Llama-index
 
 ### Prerequisites
 
-This code has been run with Python 3.11.7 with the following `requirements.txt` file:
+To run the provided code, ensure you have Python 3.11.7 installed along with the following dependencies: 
 ```py
 jupyter
 llama-index==0.10.34
@@ -20,15 +23,15 @@ openai==1.25.1
 python-dotenv #reads .env file
 trulens-eval==0.28.2 #used to evaluate RAGs
 ```
-and defining those variables in a `.env` file:
+Define the following variables in a `.env` file:
 ```py
-OPENAI_API_KEY=<insert your openai api key>
-HUGGINGFACE_API_KEY=<insert your huggingface api key>
+OPENAI_API_KEY=<insert your OpenAI API key>
+HUGGINGFACE_API_KEY=<insert your Hugging Face API key>
 ``` 
 
-### Get Data
+### Getting Data
 
-We will use a Paul Graham's essay for illustration purposes here is how to download it:
+Download a sample text file of Paul Graham's essay for demonstration:
 ```py
 !mkdir -p '../data'
 !wget 'https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt' -O '../data/paul_graham_essay.txt'
@@ -36,10 +39,8 @@ We will use a Paul Graham's essay for illustration purposes here is how to downl
 
 ### Naive RAG Implementation
 
-Now that we have some text file to work with let us proceed with building a naive RAG. 
-
 For this experiment, we will use OpenAI for the LLM and BGE as embedding model. `ServiceContext` has been deprecated since the version v.0.10.0 of llama-index and replaced by `Settings`.
-The `Settings` object enables to set global parameters and those are lazily instantiated. This means that only required elements will be loaded into memory. [See doc.](https://docs.llamaindex.ai/en/stable/module_guides/supporting_modules/service_context_migration/)
+The `Settings` object enables to set global parameters and those are lazily instantiated. This means that only required elements will be loaded into memory.
 
 ```py
 from llama_index.core import Settings
@@ -52,11 +53,10 @@ Settings.embed_model = HuggingFaceEmbedding(
 )
 ```
 
-From there, it only takes 4 rows to get a Naive RAG running.
+With Llama-index, implementing a Naive RAG is incredibly simple:
 
 ```py
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
-
 
 documents = SimpleDirectoryReader(
     input_files=["../data/paul_graham_essay.txt"]
@@ -69,15 +69,95 @@ str(response)
 
 ## Limitations and Causes
 
-Naive RAG are a fast way to get started interacting with your documents but the questions they are able to answer are only as good as the context it can retrieve. That is why the `chunk_size` parameter is usually subject to tuning as it impacts drastically the performances. 
-However, other approaches revealed themselves to retrieve the most relevant chunks. Namely the `Sentence Window Retrieval`.
+While Naive RAG implementations offer a quick way to interact with documents, the quality of their responses is only as good as the context they retrieve. Tuning parameters like `chunk_size` can significantly impact performance. However, other approaches, such as Sentence Window Retrieval, have proven effective in retrieving the most relevant context.
 
+## Sentence Window Retrieval
 
-## Small-to-big retrieval
+By default, the `VectorStoreIndex` splits documents into chunks before computing their embeddings. However, you have the flexibility to control how your documents are parsed by selecting a different type of `node_parser`. In this case, we'll utilize the `SentenceWindowNodeParser`, which parses documents into single-sentence nodes while retaining the preceding and following sentences in the metadata field "window".
 
-## 
+Setting a window size of 1 means that the "window" field will contain one sentence on either side of the original sentence. This approach significantly improves context relevance during retrieval, as it provides a more comprehensive context for each sentence.
+
+```py
+node_parser = SentenceWindowNodeParser.from_defaults(
+        window_size=1,
+        window_metadata_key="window",
+        original_text_metadata_key="original_text",
+    )
+sentence_index = VectorStoreIndex.from_documents(
+            document,
+            node_parser=node_parser,
+        )
+```
+
+The `MetadataReplacementPostProcessor` functions by swapping out the node's content with a specific field from the node metadata—referred to as "window" in this instance. **In practical terms, while the retrieval process solely relies on the node content to locate similar nodes based on the query, it's the "window" metadata, comprising the original text and adjacent sentences, that's fed into the re-ranker. This input allows the re-ranker to evaluate the context and identify the nodes most valuable for addressing the query.**
+
+The re-ranking is executed with the `SentenceTransformerRerank` class and leverages the BGE embeddings. This step selects the most informative nodes to answer the query, preventing the context window from being cluttered with irrelevant data. As a result, re-ranking often reduces the number of tokens used and decreases latency.
+
+```py
+postproc = MetadataReplacementPostProcessor(target_metadata_key="window")
+rerank = SentenceTransformerRerank(
+    top_n=top_n, 
+    model="BAAI/bge-reranker-base"
+)
+sentence_window_engine = sentence_index.as_query_engine(
+    similarity_top_k=similarity_top_k, 
+    node_postprocessors=[postproc, rerank]
+)
+```
+
+In this example, the top `similarity_top_k` most similar nodes to the query are initially retrieved. These nodes are then re-ranked based on their relevance to answering the query. Only the top `top_n` examples are retained and added to the context for generating the answer.
+
+## Automerging Retrieval
+
+Another commonly used parser is the `HierarchicalNodeParser`. This parser recursively split a document in chunks. This builds a hierarchy of nodes that are connected to their parent.
+
+```py
+node_parser = HierarchicalNodeParser.from_defaults(chunk_sizes=[2048, 512, 128])
+nodes = node_parser.get_nodes_from_documents(documents)
+leaf_nodes = get_leaf_nodes(nodes)
+automerging_index = VectorStoreIndex(leaf_nodes)
+```
+
+The `AutoMergingRetriever` recursively merges subsets of leaf nodes that are similar to the query. This helps retrieve as much informative context as possible.
+
+```py
+base_retriever = automerging_index.as_retriever(similarity_top_k=similarity_top_k)
+retriever = AutoMergingRetriever(base_retriever)
+rerank = SentenceTransformerRerank(
+    top_n=rerank_top_n,
+    model="BAAI/bge-reranker-base"
+)
+auto_merging_engine = RetrieverQueryEngine.from_args(
+    retriever,
+    node_postprocessors=[rerank]
+)
+```
+
+Similar to the Sentence Window Retrieval approach, we implement a re-ranking step for the retrieved nodes to provide only the most valuable information to the LLM for answer generation. Both methods result in lower token usage and reduced response latency.
+
+## Evaluation
+
+We conducted an experiment with three different RAGs and compared their results using the trulens-eval library. We devised 10 questions for each chatbot and evaluated the quality of their answers based on three criteria:
+- Answer Relevance
+- Context Relevance
+- Groundedness
+
+The entire experiment code is available [here](https://github.com/nnCharles/avancio/tree/main/practical_llm).
+
+![](./docs/evaluation.png)
+
+In this specific case, a very simplistic demo example, the primary improvement we observed was a significant reduction in token usage. This indicates that we achieved similar performances for a fraction of the initial cost. However, in larger examples, we can anticipate an improvement in Context Relevance as well.
 
 ## Summary
 
+In this article, we presented how to get started with building a naive RAG with Llama-index and how to customize the retrieval process to obtain more relevant results. We finally concluded with the importance of having an automated evaluation in place to choose which version should be deployed in production.
 
+## Sources
 
+[1] [deeplearning.ai RAG course](https://www.deeplearning.ai/short-courses/building-evaluating-advanced-rag)
+
+[2] [Llama-index Node PostProcessors documentation](https://docs.llamaindex.ai/en/stable/module_guides/querying/node_postprocessors/node_postprocessors/)
+
+[3] [Migration documentation.](https://docs.llamaindex.ai/en/stable/module_guides/supporting_modules/service_context_migration/)
+
+[4] [AutoMerging documentation](https://docs.llamaindex.ai/en/stable/examples/retrievers/auto_merging_retriever/)
