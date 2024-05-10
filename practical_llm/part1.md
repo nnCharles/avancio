@@ -1,10 +1,14 @@
 # Boosting RAG Metrics: Two Practical Methods
 
+## Summary
+
+In this article, we present how to get started with building a naive RAG with Llama-index and how to customize the retrieval process to obtain more relevant results. We finally elaborate on the importance of having an automated evaluation in place to choose which version should be deployed in production.
+
+## What is RAG?
+
 Retrieval-Augmented Generation (RAG) is a powerful framework used to enhance the contextual understanding of Large Language Models (LLMs) by incorporating additional knowledge. By extending the context provided to LLMs, RAG enables them to generate more accurate and relevant responses, making it particularly valuable for companies seeking personalized interactions with their data.
 
 Numerous companies aim to utilize chatbots to interact with their clients. Consequently, the chatbot serves as the face of the company, embodying its capacity to offer assistance, convey warmth, and demonstrate dedication. Therefore, to ensure optimal customer experience and maintain strong client relationships, it is crucial to develop advanced chatbots that deliver exceptional performance.
-
-## Understanding the RAG Process
 
 The RAG process can be broken down into three main phases:
 
@@ -150,9 +154,9 @@ The entire experiment code is available [here](https://github.com/nnCharles/avan
 
 In this specific case, a very simplistic demo example, the primary improvement we observed was a significant reduction in token usage. This indicates that we achieved similar performances for a fraction of the initial cost. However, in larger examples, we can anticipate an improvement in Context Relevance as well.
 
-## Summary
+## Next Step
 
-In this article, we presented how to get started with building a naive RAG with Llama-index and how to customize the retrieval process to obtain more relevant results. We finally concluded with the importance of having an automated evaluation in place to choose which version should be deployed in production.
+In our upcoming episode, we'll delve further into our assessment procedure. We'll explore methods for automating it and determining which metrics are best suited for diagnosing our pipeline's issues, helping us identify areas that require more focus.
 
 ## Sources
 
