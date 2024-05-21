@@ -1,10 +1,10 @@
-Can you name the first book of the Bible?
-Who is considered the author of the Book of Genesis?
-In which book of the Bible can the Ten Commandments be found?
-What is the name of the city where Jesus was born according to the New Testament?
-Can you name the four Gospels in the New Testament?
-Which prophet is known for being swallowed by a big fish?
-What is the shortest verse in the Bible?
-Who betrayed Jesus according to the New Testament?
-In which book of the Bible can the story of Noah's Ark be found?
-Can you name one of the major prophets in the Old Testament?
+What were Paul Graham's two main areas of focus before college?
+What programming language did Paul Graham use in 9th grade on the IBM 1401?
+How did Paul Graham's experience with microcomputers change his approach to programming?
+What was Paul Graham's initial plan for his college major?
+What inspired Paul Graham to pursue AI?
+Why did Paul Graham start teaching himself Lisp?
+What led Paul Graham to realize that AI, as practiced at the time, was flawed?
+How did Paul Graham's experience at the Accademia di Belli Arti differ from his expectations?
+What prompted Paul Graham to leave RISD in 1993?
+What was the catalyst for Paul Graham's involvement in the World Wide Web and the founding of Viaweb?
