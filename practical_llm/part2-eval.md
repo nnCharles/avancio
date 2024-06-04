@@ -12,7 +12,7 @@ While metrics like BLEU (Bilingual Evaluation Understudy) and ROUGE (Recall-Orie
 
 Hence, evaluating the quality of chatbots has traditionally relied on gathering human feedback on a predefined set of commonly asked questions. However, advancements in AI capabilities have introduced a new trend known as AI-to-AI evaluation. This method involves feeding an AI model with the question asked and the corresponding response, tasking it with assessing the answer's quality and assigning a score. Remarkably, evaluations conducted by AI consistently align with those provided by humans, validating this approach. Moreover, it opens avenues for a significantly more cost-effective, rapid, and scalable approach to benchmarking models.
 
-All the code used for this example is publicly available on GitHub: [https://github.com/nnCharles/avancio/tree/main/practical_llm](https://github.com/nnCharles/avancio/tree/main/practical_llm)
+All the code used for this example is publicly available on GitHub: [https://github.com/nnCharles/avancio/tree/main/practical_llm](https://github.com/nnCharles/avancio/tree/main/practical_llm).
 
 ## The RAG Triad
 
